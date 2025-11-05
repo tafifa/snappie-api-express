@@ -1,0 +1,2024 @@
+openapi: 3.0.3
+info:
+  title: Snappie API
+  description: |
+    API untuk aplikasi Snappie - platform social media berbasis lokasi dengan fitur gamifikasi.
+    
+    ## Fitur Utama
+    - Autentikasi dan manajemen pengguna
+    - Manajemen tempat (places) dan check-in
+    - Sistem gamifikasi (coins, experience, achievements)
+    - Fitur sosial (follow, posts, comments, likes)
+    - Upload dan manajemen gambar
+    - Sistem artikel dan konten
+    - Leaderboard dan kompetisi
+    
+    ## Autentikasi
+    API menggunakan JWT Bearer token untuk autentikasi. Sertakan token di header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+  version: 1.0.0
+  contact:
+    name: Snappie API Support
+    email: support@snappie.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.snappie.com/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "john@example.com"
+        profilePicture:
+          type: string
+          nullable: true
+          example: "https://example.com/profile.jpg"
+        bio:
+          type: string
+          nullable: true
+          example: "Travel enthusiast"
+        location:
+          type: string
+          nullable: true
+          example: "Jakarta, Indonesia"
+        coins:
+          type: integer
+          example: 150
+        experience:
+          type: integer
+          example: 1250
+        level:
+          type: integer
+          example: 5
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Place:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Monas"
+        description:
+          type: string
+          example: "Monumen Nasional Jakarta"
+        address:
+          type: string
+          example: "Jl. Silang Monas, Jakarta Pusat"
+        latitude:
+          type: number
+          format: float
+          example: -6.1754
+        longitude:
+          type: number
+          format: float
+          example: 106.8272
+        category:
+          type: string
+          example: "Monument"
+        images:
+          type: array
+          items:
+            type: string
+        rating:
+          type: number
+          format: float
+          example: 4.5
+        totalReviews:
+          type: integer
+          example: 125
+        createdAt:
+          type: string
+          format: date-time
+
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Tips Traveling Jakarta"
+        content:
+          type: string
+          example: "Artikel lengkap tentang tips traveling..."
+        excerpt:
+          type: string
+          example: "Tips singkat untuk traveling di Jakarta"
+        category:
+          type: string
+          example: "Travel"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["travel", "jakarta", "tips"]
+        published:
+          type: boolean
+          example: true
+        views:
+          type: integer
+          example: 1250
+        author:
+          $ref: '#/components/schemas/User'
+        publishedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        content:
+          type: string
+          example: "Great day at the beach!"
+        images:
+          type: array
+          items:
+            type: string
+        author:
+          $ref: '#/components/schemas/User'
+        likes:
+          type: integer
+          example: 25
+        comments:
+          type: integer
+          example: 5
+        createdAt:
+          type: string
+          format: date-time
+
+    Achievement:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "First Check-in"
+        description:
+          type: string
+          example: "Complete your first check-in"
+        icon:
+          type: string
+          example: "🏆"
+        points:
+          type: integer
+          example: 50
+        unlocked:
+          type: boolean
+          example: true
+        unlockedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          enum: [earned, spent, bonus]
+          example: "earned"
+        amount:
+          type: integer
+          example: 25
+        description:
+          type: string
+          example: "Check-in at Monas"
+        createdAt:
+          type: string
+          format: date-time
+
+    Image:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        filename:
+          type: string
+          example: "image_123456.jpg"
+        originalName:
+          type: string
+          example: "my-photo.jpg"
+        mimeType:
+          type: string
+          example: "image/jpeg"
+        size:
+          type: integer
+          example: 1024000
+        url:
+          type: string
+          example: "https://example.com/uploads/image_123456.jpg"
+        uploadedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation successful"
+        data:
+          type: object
+
+    PaginationMeta:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 10
+        totalItems:
+          type: integer
+          example: 100
+        itemsPerPage:
+          type: integer
+          example: 10
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Mendapatkan status kesehatan server dan informasi sistem
+      security: []
+      responses:
+        '200':
+          description: Server status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Server berjalan dengan sehat"
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "healthy"
+                      timestamp:
+                        type: string
+                        format: date-time
+                      uptime:
+                        type: number
+                        example: 3600.5
+                      version:
+                        type: object
+                        properties:
+                          api:
+                            type: string
+                            example: "1.0.0"
+                          node:
+                            type: string
+                            example: "18.17.0"
+                      environment:
+                        type: string
+                        example: "development"
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: "connected"
+                          connection:
+                            type: string
+                            example: "postgresql"
+                      memory:
+                        type: object
+                        properties:
+                          used:
+                            type: string
+                            example: "45.2 MB"
+                          total:
+                            type: string
+                            example: "512 MB"
+                          percentage:
+                            type: string
+                            example: "8.8%"
+                      endpoints:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            path:
+                              type: string
+                            description:
+                              type: string
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Mendaftarkan pengguna baru
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - username
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "John Doe"
+                username:
+                  type: string
+                  example: "johndoe"
+                email:
+                  type: string
+                  format: email
+                  example: "john@example.com"
+                password:
+                  type: string
+                  minLength: 6
+                  example: "password123"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+                          token:
+                            type: string
+                            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Login pengguna dengan email/username dan password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                  description: Email atau username
+                  example: "john@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+                          token:
+                            type: string
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Logout pengguna dan invalidate token
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/status:
+    get:
+      tags:
+        - Authentication
+      summary: Check authentication status
+      description: Mengecek status autentikasi pengguna
+      responses:
+        '200':
+          description: Authentication status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          authenticated:
+                            type: boolean
+                          user:
+                            $ref: '#/components/schemas/User'
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get user profile
+      description: Mendapatkan profil pengguna yang sedang login
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+
+    put:
+      tags:
+        - Authentication
+      summary: Update user profile
+      description: Mengupdate profil pengguna
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                username:
+                  type: string
+                bio:
+                  type: string
+                location:
+                  type: string
+                profilePicture:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+
+  /users/search:
+    get:
+      tags:
+        - Users
+      summary: Search users
+      description: Mencari pengguna berdasarkan nama atau username
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Query pencarian
+          example: "john"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Jumlah hasil maksimal
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          users:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/User'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Mendapatkan informasi pengguna berdasarkan ID
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      description: Mendapatkan profil pengguna yang sedang login
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Mengupdate profil pengguna
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                username:
+                  type: string
+                bio:
+                  type: string
+                location:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+
+  /users/{id}/stats:
+    get:
+      tags:
+        - Users
+      summary: Get user statistics
+      description: Mendapatkan statistik pengguna (coins, experience, achievements, dll)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          stats:
+                            type: object
+                            properties:
+                              coins:
+                                type: integer
+                              experience:
+                                type: integer
+                              level:
+                                type: integer
+                              totalCheckins:
+                                type: integer
+                              totalReviews:
+                                type: integer
+                              totalPosts:
+                                type: integer
+                              followers:
+                                type: integer
+                              following:
+                                type: integer
+                              achievements:
+                                type: integer
+
+  /places:
+    get:
+      tags:
+        - Places
+      summary: Get all places
+      description: Mendapatkan daftar semua tempat
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter berdasarkan kategori
+      responses:
+        '200':
+          description: List of places
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          places:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Place'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Places
+      summary: Create new place
+      description: Membuat tempat baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - address
+                - latitude
+                - longitude
+                - category
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                address:
+                  type: string
+                latitude:
+                  type: number
+                  format: float
+                longitude:
+                  type: number
+                  format: float
+                category:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Place created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          place:
+                            $ref: '#/components/schemas/Place'
+
+  /places/search:
+    get:
+      tags:
+        - Places
+      summary: Search places
+      description: Mencari tempat berdasarkan nama atau alamat
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Query pencarian
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          places:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Place'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /places/nearby:
+    get:
+      tags:
+        - Places
+      summary: Get nearby places
+      description: Mendapatkan tempat-tempat terdekat berdasarkan koordinat
+      security: []
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 5000
+          description: Radius dalam meter
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter berdasarkan kategori
+      responses:
+        '200':
+          description: Nearby places
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          places:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/Place'
+                                - type: object
+                                  properties:
+                                    distance:
+                                      type: number
+                                      description: Jarak dalam meter
+
+  /places/{id}:
+    get:
+      tags:
+        - Places
+      summary: Get place by ID
+      description: Mendapatkan detail tempat berdasarkan ID
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Place details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          place:
+                            $ref: '#/components/schemas/Place'
+
+  /gamification/checkin:
+    post:
+      tags:
+        - Gamification
+      summary: Check-in to a place
+      description: Melakukan check-in ke suatu tempat dan mendapatkan coins/experience
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - placeId
+                - latitude
+                - longitude
+              properties:
+                placeId:
+                  type: integer
+                latitude:
+                  type: number
+                  format: float
+                longitude:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checkin:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              place:
+                                $ref: '#/components/schemas/Place'
+                              coinsEarned:
+                                type: integer
+                              experienceEarned:
+                                type: integer
+                              checkinTime:
+                                type: string
+                                format: date-time
+
+  /gamification/review:
+    post:
+      tags:
+        - Gamification
+      summary: Submit place review
+      description: Memberikan review untuk suatu tempat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - placeId
+                - rating
+              properties:
+                placeId:
+                  type: integer
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+      responses:
+        '200':
+          description: Review submitted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          review:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              rating:
+                                type: integer
+                              comment:
+                                type: string
+                              coinsEarned:
+                                type: integer
+                              experienceEarned:
+                                type: integer
+
+  /gamification/coins/transactions:
+    get:
+      tags:
+        - Gamification
+      summary: Get coin transactions
+      description: Mendapatkan riwayat transaksi coins pengguna
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Coin transactions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          transactions:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Transaction'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /gamification/exp/transactions:
+    get:
+      tags:
+        - Gamification
+      summary: Get experience transactions
+      description: Mendapatkan riwayat transaksi experience pengguna
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Experience transactions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          transactions:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Transaction'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /gamification/achievements:
+    get:
+      tags:
+        - Gamification
+      summary: Get user achievements
+      description: Mendapatkan daftar achievements pengguna
+      responses:
+        '200':
+          description: User achievements
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          achievements:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Achievement'
+
+  /gamification/challenges:
+    get:
+      tags:
+        - Gamification
+      summary: Get active challenges
+      description: Mendapatkan daftar tantangan yang sedang aktif
+      responses:
+        '200':
+          description: Active challenges
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          challenges:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                                description:
+                                  type: string
+                                reward:
+                                  type: integer
+                                progress:
+                                  type: integer
+                                target:
+                                  type: integer
+                                endDate:
+                                  type: string
+                                  format: date-time
+
+  /gamification/rewards:
+    get:
+      tags:
+        - Gamification
+      summary: Get available rewards
+      description: Mendapatkan daftar reward yang tersedia
+      responses:
+        '200':
+          description: Available rewards
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          rewards:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                                description:
+                                  type: string
+                                cost:
+                                  type: integer
+                                available:
+                                  type: boolean
+
+  /leaderboard/top-users:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get top users leaderboard
+      description: Mendapatkan leaderboard pengguna teratas
+      security: []
+      parameters:
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [coins, experience, checkins, reviews]
+            default: coins
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Top users leaderboard
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          leaderboard:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                rank:
+                                  type: integer
+                                user:
+                                  $ref: '#/components/schemas/User'
+                                score:
+                                  type: integer
+
+  /leaderboard/categories:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get leaderboard categories
+      description: Mendapatkan kategori-kategori leaderboard yang tersedia
+      security: []
+      responses:
+        '200':
+          description: Leaderboard categories
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          categories:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                description:
+                                  type: string
+
+  /social/follow/{userId}:
+    post:
+      tags:
+        - Social
+      summary: Follow user
+      description: Mengikuti pengguna lain
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User followed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /social/unfollow/{userId}:
+    delete:
+      tags:
+        - Social
+      summary: Unfollow user
+      description: Berhenti mengikuti pengguna
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User unfollowed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /social/followers/{userId}:
+    get:
+      tags:
+        - Social
+      summary: Get user followers
+      description: Mendapatkan daftar followers pengguna
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: User followers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          followers:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/User'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /social/following/{userId}:
+    get:
+      tags:
+        - Social
+      summary: Get users being followed
+      description: Mendapatkan daftar pengguna yang diikuti
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Users being followed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          following:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/User'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /social/posts:
+    post:
+      tags:
+        - Social
+      summary: Create new post
+      description: Membuat post baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          post:
+                            $ref: '#/components/schemas/Post'
+
+  /social/feed:
+    get:
+      tags:
+        - Social
+      summary: Get user feed
+      description: Mendapatkan feed posts dari pengguna yang diikuti
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: User feed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          posts:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Post'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /social/posts/{postId}/like:
+    post:
+      tags:
+        - Social
+      summary: Like a post
+      description: Menyukai sebuah post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post liked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /social/posts/{postId}/unlike:
+    delete:
+      tags:
+        - Social
+      summary: Unlike a post
+      description: Membatalkan like pada sebuah post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Post unliked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /social/posts/{postId}/comments:
+    post:
+      tags:
+        - Social
+      summary: Add comment to post
+      description: Menambahkan komentar pada sebuah post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          comment:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              content:
+                                type: string
+                              author:
+                                $ref: '#/components/schemas/User'
+                              createdAt:
+                                type: string
+                                format: date-time
+
+    get:
+      tags:
+        - Social
+      summary: Get post comments
+      description: Mendapatkan komentar-komentar pada sebuah post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Post comments
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          comments:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                content:
+                                  type: string
+                                author:
+                                  $ref: '#/components/schemas/User'
+                                createdAt:
+                                  type: string
+                                  format: date-time
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /upload/image:
+    post:
+      tags:
+        - Upload
+      summary: Upload single image
+      description: Mengupload satu gambar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          image:
+                            $ref: '#/components/schemas/Image'
+
+  /upload/images:
+    post:
+      tags:
+        - Upload
+      summary: Upload multiple images
+      description: Mengupload beberapa gambar sekaligus
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          images:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Image'
+
+  /upload/image/{id}:
+    get:
+      tags:
+        - Upload
+      summary: Get image info
+      description: Mendapatkan informasi gambar berdasarkan ID
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Image information
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          image:
+                            $ref: '#/components/schemas/Image'
+
+    delete:
+      tags:
+        - Upload
+      summary: Delete image
+      description: Menghapus gambar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Image deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /articles:
+    get:
+      tags:
+        - Articles
+      summary: Get all articles
+      description: Mendapatkan daftar semua artikel yang dipublikasi
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter berdasarkan kategori
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Pencarian berdasarkan judul
+      responses:
+        '200':
+          description: List of articles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          articles:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Article'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Articles
+      summary: Create new article
+      description: Membuat artikel baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - content
+                - excerpt
+                - category
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                excerpt:
+                  type: string
+                category:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                published:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Article created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          article:
+                            $ref: '#/components/schemas/Article'
+
+  /articles/{id}:
+    get:
+      tags:
+        - Articles
+      summary: Get article by ID
+      description: Mendapatkan detail artikel berdasarkan ID
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Article details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          article:
+                            $ref: '#/components/schemas/Article'
+
+    put:
+      tags:
+        - Articles
+      summary: Update article
+      description: Mengupdate artikel (hanya penulis yang bisa)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                excerpt:
+                  type: string
+                category:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                published:
+                  type: boolean
+      responses:
+        '200':
+          description: Article updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          article:
+                            $ref: '#/components/schemas/Article'
+
+    delete:
+      tags:
+        - Articles
+      summary: Delete article
+      description: Menghapus artikel (hanya penulis yang bisa)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Article deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management and profiles
+  - name: Places
+    description: Location and place management
+  - name: Gamification
+    description: Gamification features (coins, experience, achievements)
+  - name: Leaderboard
+    description: Leaderboard and ranking system
+  - name: Social
+    description: Social media features (follow, posts, comments)
+  - name: Upload
+    description: File upload and management
+  - name: Articles
+    description: Article and content management
