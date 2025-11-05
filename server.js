@@ -47,7 +47,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static('uploads'));
 
 // API routes
-const API_PREFIX = '/api/v1';
+const API_PREFIX = process.env.NODE_ENV === 'production' ? '/v1' : '/api/v1';
 
 app.use(`${API_PREFIX}/health`, require('./routes/health'));
 app.use(`${API_PREFIX}/auth`, require('./routes/auth'));

@@ -52,10 +52,6 @@ DB_PASSWORD=your_password
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRES_IN=24h
 JWT_REFRESH_EXPIRES_IN=30d
-
-# API Configuration
-API_VERSION=v1
-API_PREFIX=/api
 ```
 
 5. Jalankan server:
