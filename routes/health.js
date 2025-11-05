@@ -8,15 +8,19 @@ const router = express.Router();
  * @access  Public
  */
 router.get('/', async (req, res) => {
+  const startTime = process.hrtime();
+  
   try {
     // Check database connection
     let dbStatus = 'disconnected';
-    let dbName = 'unknown';
+    let dbPingTime = 0;
     
     try {
+      const dbStartTime = process.hrtime();
       await sequelize.authenticate();
+      const dbEndTime = process.hrtime(dbStartTime);
+      dbPingTime = Math.round((dbEndTime[0] * 1000) + (dbEndTime[1] / 1000000)); // Convert to milliseconds
       dbStatus = 'connected';
-      dbName = sequelize.config.database;
     } catch (dbError) {
       dbStatus = 'disconnected';
     }
@@ -30,7 +34,6 @@ router.get('/', async (req, res) => {
       environment: process.env.NODE_ENV,
       database: {
         status: dbStatus,
-        name: dbName,
         type: 'PostgreSQL'
       },
       memory: {
@@ -42,6 +45,14 @@ router.get('/', async (req, res) => {
         auth: '/api/v1/auth/*'
       }
     };
+
+    // Calculate total response time
+    const endTime = process.hrtime(startTime);
+    const responseTime = Math.round((endTime[0] * 1000) + (endTime[1] / 1000000)); // Convert to milliseconds
+    
+    // Add response time to health data
+    healthData.response_time_ms = responseTime;
+    healthData.database.ping_time_ms = dbPingTime;
 
     res.status(200).json(healthData);
   } catch (error) {

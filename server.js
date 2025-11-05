@@ -9,10 +9,6 @@ const { connectDB } = require('./config/database');
 // Initialize models and associations
 require('./models');
 
-// Import routes
-// const authRoutes = require('./routes/auth');
-// const healthRoutes = require('./routes/health');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
