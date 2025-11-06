@@ -150,8 +150,86 @@ const authorize = (...roles) => {
   };
 };
 
+/**
+ * Verify registration API key
+ * Checks if the API key is valid for registration protection
+ * IMPORTANT: Use REGISTRATION_API_KEY in .env, NOT JWT_SECRET
+ */
+const verifyRegistrationToken = (req, res, next) => {
+  try {
+    // Get API key from header
+    const authHeader = req.header('Authorization');
+    
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: 'API key registrasi tidak ditemukan. Akses ditolak.'
+      });
+    }
+
+    // Check if token starts with 'Bearer '
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Format API key tidak valid. Gunakan Bearer token.'
+      });
+    }
+
+    // Extract API key
+    const apiKey = authHeader.substring(7);
+
+    if (!apiKey) {
+      return res.status(401).json({
+        success: false,
+        message: 'API key registrasi tidak ditemukan. Akses ditolak.'
+      });
+    }
+
+    // Check if REGISTRATION_API_KEY is configured
+    if (!process.env.REGISTRATION_API_KEY) {
+      console.error('REGISTRATION_API_KEY not configured in environment variables');
+      return res.status(500).json({
+        success: false,
+        message: 'Konfigurasi registrasi tidak valid. Hubungi administrator.'
+      });
+    }
+
+    // Compare API key with REGISTRATION_API_KEY (NOT JWT_SECRET)
+    // Using timing-safe comparison to prevent timing attacks
+    const crypto = require('crypto');
+    const expectedKey = Buffer.from(process.env.REGISTRATION_API_KEY);
+    const providedKey = Buffer.from(apiKey);
+    
+    // Ensure both keys have the same length before comparison
+    if (expectedKey.length !== providedKey.length) {
+      return res.status(403).json({
+        success: false,
+        message: 'API key registrasi tidak valid. Akses ditolak.'
+      });
+    }
+
+    // Timing-safe comparison
+    if (!crypto.timingSafeEqual(expectedKey, providedKey)) {
+      return res.status(403).json({
+        success: false,
+        message: 'API key registrasi tidak valid. Akses ditolak.'
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Registration API key verification error:', error.message);
+    
+    return res.status(401).json({
+      success: false,
+      message: 'Terjadi kesalahan saat verifikasi API key registrasi.'
+    });
+  }
+};
+
 module.exports = {
   authenticate,
   optionalAuth,
-  authorize
+  authorize,
+  verifyRegistrationToken
 };

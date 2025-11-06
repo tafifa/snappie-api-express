@@ -12,7 +12,7 @@ const {
 } = require('../controllers/authController');
 
 // Import middleware
-const { authenticate } = require('../middleware/auth');
+const { authenticate, verifyRegistrationToken } = require('../middleware/auth');
 const {
   validateRegister,
   validateLogin,
@@ -24,8 +24,9 @@ const {
  * Public Routes
  */
 
-// Register new user
+// Register new user (protected with registration token)
 router.post('/register', 
+  verifyRegistrationToken,
   validateRegister,
   handleValidationErrors,
   register
