@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const PersonalAccessToken = require('../models/PersonalAccessToken');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -166,16 +167,19 @@ const login = async (req, res) => {
     // Update last login
     await user.updateLastLogin();
 
-    // Generate tokens
+    // Generate tokens - create Sanctum-compatible token
     const accessToken = generateAccessToken(user);
-    // const refreshToken = generateRefreshToken(user);
+    
+    // Also create database token for Laravel Sanctum compatibility
+    const tokenRecord = await PersonalAccessToken.createToken(user, 'API Login');
 
     res.json({
       success: true,
       message: 'Login berhasil',
       data: {
         user: user.getProfile(),
-        token: accessToken
+        token: tokenRecord.token, // Gunakan token dari database untuk compatibility
+        jwtToken: accessToken // Keep JWT for backward compatibility
       }
     });
 
@@ -196,9 +200,15 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   try {
     const user = req.user;
+    const token = req.token;
+
+    // Delete the current token from database (Laravel Sanctum doesn't have 'revoked' column)
+    if (token) {
+      await PersonalAccessToken.destroy({ where: { token } });
+    }
 
     console.log('User logged out successfully:', {
-      userId: user._id,
+      userId: user.id,
       email: user.email
     });
 

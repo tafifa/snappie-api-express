@@ -1,5 +1,6 @@
 const { verifyToken } = require('../utils/jwt');
 const User = require('../models/User');
+const PersonalAccessToken = require('../models/PersonalAccessToken');
 
 /**
  * Authentication middleware
@@ -35,38 +36,73 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    // Verify token
-    const decoded = verifyToken(token);
+    // First, check if token exists in database (compatible with Laravel Sanctum)
+    const tokenRecord = await PersonalAccessToken.findOne({
+      where: { token },
+      include: [{
+        model: User,
+        as: 'user'
+      }]
+    });
 
-    // Check if token type is access token
-    if (decoded.type !== 'access') {
+    if (!tokenRecord) {
       return res.status(401).json({
         success: false,
-        message: 'Token type tidak valid.'
+        message: 'Token tidak ditemukan di database. Akses ditolak.'
       });
     }
 
-    // Find user by ID
-    const user = await User.findByPk(decoded.id);
+    // Check if token is expired (Laravel Sanctum doesn't have 'revoked' column)
+    // Token management is done through deletion rather than revocation
 
-    if (!user) {
+    if (tokenRecord.expires_at && new Date() > tokenRecord.expires_at) {
       return res.status(401).json({
         success: false,
-        message: 'User tidak ditemukan.'
+        message: 'Token sudah expired. Akses ditolak.'
       });
+    }
+
+    // Verify JWT token structure (optional, for backward compatibility)
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+      
+      // Check if token type is access token
+      if (decoded.type !== 'access') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token type tidak valid.'
+        });
+      }
+
+      // Verify user ID matches between JWT and database
+      if (decoded.id !== tokenRecord.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: 'Token user mismatch. Akses ditolak.'
+        });
+      }
+    } catch (error) {
+      // If JWT verification fails but token exists in DB, it might be a Sanctum token
+      // We can still proceed with database validation only
+      console.warn('JWT verification failed, but token valid in database:', error.message);
     }
 
     // Check if user is active
-    if (!user.isActive()) {
+    if (!tokenRecord.user.isActive()) {
       return res.status(401).json({
         success: false,
         message: 'Akun telah dinonaktifkan. Silakan hubungi admin.'
       });
     }
 
+    // Update last used timestamp
+    await tokenRecord.update({ last_used_at: new Date() });
+
     // Attach user to request
-    req.user = user;
+    req.user = tokenRecord.user;
     req.token = token;
+    req.tokenRecord = tokenRecord;
 
     next();
   } catch (error) {
@@ -112,22 +148,33 @@ const optionalAuth = async (req, res, next) => {
       return next();
     }
 
-    const decoded = verifyToken(token);
-    
-    if (decoded.type !== 'access') {
+    // Check if token exists in database
+    const tokenRecord = await PersonalAccessToken.findOne({
+      where: { token },
+      include: [{
+        model: User,
+        as: 'user'
+      }]
+    });
+
+    if (!tokenRecord || (tokenRecord.expires_at && new Date() > tokenRecord.expires_at)) {
       return next();
     }
 
-    const user = await User.findById(decoded.id);
-    
-    if (user && user.isActive()) {
-      req.user = user;
+    // Check if user is active
+    if (tokenRecord.user && tokenRecord.user.isActive()) {
+      // Update last used timestamp
+      await tokenRecord.update({ last_used_at: new Date() });
+      
+      req.user = tokenRecord.user;
       req.token = token;
+      req.tokenRecord = tokenRecord;
     }
 
     next();
   } catch (error) {
     // Continue without authentication if token is invalid
+    console.warn('Optional auth error:', error.message);
     next();
   }
 };

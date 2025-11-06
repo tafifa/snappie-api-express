@@ -19,6 +19,7 @@ const UserAchievement = require('./UserAchievement');
 const UserChallenge = require('./UserChallenge');
 const UserReward = require('./UserReward');
 const Leaderboard = require('./Leaderboard');
+const PersonalAccessToken = require('./PersonalAccessToken');
 
 // Create models object
 const models = {
@@ -40,6 +41,7 @@ const models = {
   UserChallenge,
   UserReward,
   Leaderboard,
+  PersonalAccessToken,
   sequelize
 };
 
