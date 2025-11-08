@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require('sequelize');
+const { DataTypes, Model, Op } = require('sequelize');
 const { sequelize } = require('../config/database');
 
 class PersonalAccessToken extends Model {
@@ -35,13 +35,48 @@ class PersonalAccessToken extends Model {
     const crypto = require('crypto');
     const token = crypto.randomBytes(32).toString('hex'); // Reduced from 40 to 32 bytes (64 chars)
     
+    // Set expiration to 1 day (24 hours)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 1);
+    
     return await PersonalAccessToken.create({
       tokenable_type: 'App\\Models\\User',
       tokenable_id: user.id,
       name,
       token,
       abilities: abilities.join(','),
-      expires_at: null // atau set expiration jika diperlukan
+      expires_at: expiresAt,
+      last_used_at: new Date()
+    });
+  }
+  
+  // Revoke all other active tokens for this user (single session)
+  static async revokeOtherTokens(userId, currentTokenId = null) {
+    const whereClause = {
+      tokenable_id: userId,
+      tokenable_type: 'App\\Models\\User',
+    };
+    
+    if (currentTokenId) {
+      whereClause.id = { [Op.ne]: currentTokenId };
+    }
+    
+    // Delete all other tokens for this user
+    return await PersonalAccessToken.destroy({
+      where: whereClause
+    });
+  }
+  
+  // Check if user has any active session
+  static async hasActiveSession(userId) {
+    return await PersonalAccessToken.findOne({
+      where: {
+        tokenable_id: userId,
+        tokenable_type: 'App\\Models\\User',
+        expires_at: {
+          [Op.gt]: new Date()
+        }
+      }
     });
   }
 }

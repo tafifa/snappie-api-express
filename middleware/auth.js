@@ -38,12 +38,28 @@ const authenticate = async (req, res, next) => {
 
     // First, check if token exists in database (compatible with Laravel Sanctum)
     const tokenRecord = await PersonalAccessToken.findOne({
-      where: { token },
-      include: [{
-        model: User,
-        as: 'user'
-      }]
+      where: { 
+        token,
+        tokenable_type: 'App\\Models\\User'
+      }
     });
+    
+    if (!tokenRecord) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token tidak ditemukan di database. Akses ditolak.'
+      });
+    }
+    
+    // Find the user associated with the token
+    const user = await User.findByPk(tokenRecord.tokenable_id);
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User tidak ditemukan. Akses ditolak.'
+      });
+    }
 
     if (!tokenRecord) {
       return res.status(401).json({
@@ -62,6 +78,9 @@ const authenticate = async (req, res, next) => {
       });
     }
 
+    // Update last_used_at timestamp
+    await tokenRecord.update({ last_used_at: new Date() });
+
     // Verify JWT token structure (optional, for backward compatibility)
     let decoded;
     try {
@@ -76,12 +95,12 @@ const authenticate = async (req, res, next) => {
       }
 
       // Verify user ID matches between JWT and database
-      if (decoded.id !== tokenRecord.user.id) {
-        return res.status(401).json({
-          success: false,
-          message: 'Token user mismatch. Akses ditolak.'
-        });
-      }
+    if (decoded.id !== user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token user mismatch. Akses ditolak.'
+      });
+    }
     } catch (error) {
       // If JWT verification fails but token exists in DB, it might be a Sanctum token
       // We can still proceed with database validation only
@@ -89,7 +108,7 @@ const authenticate = async (req, res, next) => {
     }
 
     // Check if user is active
-    if (!tokenRecord.user.isActive()) {
+    if (!user.isActive()) {
       return res.status(401).json({
         success: false,
         message: 'Akun telah dinonaktifkan. Silakan hubungi admin.'
@@ -100,7 +119,7 @@ const authenticate = async (req, res, next) => {
     await tokenRecord.update({ last_used_at: new Date() });
 
     // Attach user to request
-    req.user = tokenRecord.user;
+    req.user = user;
     req.token = token;
     req.tokenRecord = tokenRecord;
 
@@ -150,23 +169,25 @@ const optionalAuth = async (req, res, next) => {
 
     // Check if token exists in database
     const tokenRecord = await PersonalAccessToken.findOne({
-      where: { token },
-      include: [{
-        model: User,
-        as: 'user'
-      }]
+      where: { 
+        token,
+        tokenable_type: 'App\\Models\\User'
+      }
     });
 
     if (!tokenRecord || (tokenRecord.expires_at && new Date() > tokenRecord.expires_at)) {
       return next();
     }
 
+    // Update last_used_at timestamp
+    await tokenRecord.update({ last_used_at: new Date() });
+
+    // Find the user associated with the token
+    const user = await User.findByPk(tokenRecord.tokenable_id);
+    
     // Check if user is active
-    if (tokenRecord.user && tokenRecord.user.isActive()) {
-      // Update last used timestamp
-      await tokenRecord.update({ last_used_at: new Date() });
-      
-      req.user = tokenRecord.user;
+    if (user && user.isActive()) {
+      req.user = user;
       req.token = token;
       req.tokenRecord = tokenRecord;
     }

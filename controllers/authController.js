@@ -167,6 +167,20 @@ const login = async (req, res) => {
     // Update last login
     await user.updateLastLogin();
 
+    // Check if user already has an active session
+    const existingSession = await PersonalAccessToken.hasActiveSession(user.id);
+    
+    if (existingSession) {
+      return res.status(409).json({
+        success: false,
+        message: 'Anda sudah login di perangkat lain. Silakan logout terlebih dahulu atau tunggu hingga token expired (1 hari).',
+        data: {
+          hasActiveSession: true,
+          sessionCreatedAt: existingSession.created_at
+        }
+      });
+    }
+
     // Generate tokens - create Sanctum-compatible token
     const accessToken = generateAccessToken(user);
     
