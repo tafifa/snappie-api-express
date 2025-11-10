@@ -22,7 +22,7 @@ const register = async (req, res) => {
       });
     }
 
-    const { name, username, email, imageUrl, gender, place_value, food_type } = req.body;
+    const { name, username, email, image_url, gender, place_value, food_type } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -48,7 +48,7 @@ const register = async (req, res) => {
       name,
       username,
       email: email.toLowerCase(),
-      imageUrl: imageUrl || 'https://via.placeholder.com/150',
+      imageUrl: image_url || 'https://via.placeholder.com/150',
       additionalInfo: {
         user_detail: {
           gender: gender || '',
